@@ -1,0 +1,67 @@
+import boto3
+from botocore.exceptions import ClientError
+import json
+
+dynamodb = boto3.resource('dynamodb')
+sns = boto3.client('sns')
+location = boto3.client('location')
+
+USERS_TABLE = "BloodBridge_Users"
+REQUESTS_TABLE = "BloodBridge_Requests"
+
+def lambda_handler(event, context):
+    try:
+       
+        path = event['path']
+        http_method = event['httpMethod']
+        body = json.loads(event['body']) if 'body' in event else None
+
+       
+        if path == "/register" and http_method == "POST":
+            return register_user(body)
+        elif path == "/request_blood" and http_method == "POST":
+            return request_blood(body)
+        elif path == "/notify_donors" and http_method == "POST":
+            return notify_donors(body)
+        else:
+            return response(404, {"message": "Invalid route"})
+    except Exception as e:
+        return response(500, {"error": str(e)})
+
+def register_user(data):
+    table = dynamodb.Table(USERS_TABLE)
+    table.put_item(Item=data)
+    return response(200, {"message": "User registered successfully"})
+
+def request_blood(data):
+    table = dynamodb.Table(REQUESTS_TABLE)
+    table.put_item(Item=data)
+    return response(200, {"message": "Blood request created successfully"})
+
+def notify_donors(data):
+   
+    lat, lon = data['latitude'], data['longitude']
+    radius_km = data.get('radius', 10)
+
+    response = location.search_place_index_for_position(
+        IndexName="BloodBridgeIndex",
+        Position=[lon, lat],
+        MaxResults=5
+    )
+    nearby_users = response['Results']
+
+    
+    for user in nearby_users:
+        sns.publish(
+            PhoneNumber=user['PhoneNumber'],
+            Message=f"Urgent blood request: {data['blood_type']} needed near you!"
+        )
+
+    return response(200, {"message": "Notifications sent"})
+
+def response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(body)
+    }
