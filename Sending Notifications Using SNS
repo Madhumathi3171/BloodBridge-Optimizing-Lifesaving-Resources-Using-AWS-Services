@@ -1,0 +1,11 @@
+import boto3
+
+def send_notification(donor_contact, message):
+    sns = boto3.client('sns', region_name='us-east-1')
+
+    response = sns.publish(
+        PhoneNumber=donor_contact,
+        Message=message
+    )
+
+    return response
