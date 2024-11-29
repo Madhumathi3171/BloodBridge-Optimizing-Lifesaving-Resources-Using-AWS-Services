@@ -1,0 +1,25 @@
+import boto3
+import json
+import uuid
+
+def lambda_handler(event, context):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('BloodRequests')
+
+    request_data = json.loads(event['body'])
+    request_id = str(uuid.uuid4())
+    
+    table.put_item(
+        Item={
+            'request_id': request_id,
+            'blood_group': request_data['blood_group'],
+            'location': request_data['location'],
+            'urgency': request_data['urgency'],
+            'status': 'Pending'
+        }
+    )
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'message': 'Blood request created!', 'request_id': request_id})
+    }
