@@ -1,0 +1,24 @@
+import boto3
+
+def create_dynamodb_tables():
+    dynamodb = boto3.client('dynamodb', region_name='us-east-1')
+    
+    
+    dynamodb.create_table(
+        TableName='Donors',
+        KeySchema=[{'AttributeName': 'donor_id', 'KeyType': 'HASH'}],
+        AttributeDefinitions=[{'AttributeName': 'donor_id', 'AttributeType': 'S'}],
+        ProvisionedThroughput={'ReadCapacityUnits': 5, 'WriteCapacityUnits': 5}
+    )
+
+    
+    dynamodb.create_table(
+        TableName='BloodRequests',
+        KeySchema=[{'AttributeName': 'request_id', 'KeyType': 'HASH'}],
+        AttributeDefinitions=[{'AttributeName': 'request_id', 'AttributeType': 'S'}],
+        ProvisionedThroughput={'ReadCapacityUnits': 5, 'WriteCapacityUnits': 5}
+    )
+
+    print("Tables created successfully!")
+
+create_dynamodb_tables()
