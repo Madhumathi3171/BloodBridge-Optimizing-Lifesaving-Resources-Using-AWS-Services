@@ -1,0 +1,3 @@
+aws s3api create-bucket --bucket
+bloodbridge-documents --region
+us-east-1
